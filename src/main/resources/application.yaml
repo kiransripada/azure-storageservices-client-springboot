@@ -1,0 +1,21 @@
+services:
+  azurestorage:
+    container-name: test-container
+    storage-account-name: testacount
+    access-key: 234sdf+123+1+sdvr23/sdsdf==
+    api-version: 2020-04-08
+    blob-endpoint: .blob.core.windows.net
+    table-endpoint:  .table.core.windows.net
+
+logging:
+  level:
+    org:
+      springframework:
+        web:
+          client:
+            RestTemplate: DEBUG
+
+      apache:
+        http: DEBUG
+    httpclient:
+      wire: DEBUG

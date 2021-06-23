@@ -1,5 +1,6 @@
 package az.storage.util;
 
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import java.util.Map;
  * A typical FactoryBean implementation . Ref Spring Factory bean
  */
 @Component
+@NoArgsConstructor
 public class UtilityFactory {
 
     @Autowired

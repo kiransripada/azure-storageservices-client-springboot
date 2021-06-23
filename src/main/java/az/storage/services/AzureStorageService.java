@@ -1,6 +1,8 @@
 package az.storage.services;
 
+import az.storage.builder.BlobAuthheaderBuilder;
 import az.storage.config.AzureStorageConfiguration;
+import az.storage.builder.BlobAuthHeader;
 import az.storage.util.SecurityUtil;
 import az.storage.util.UtilityFactory;
 import az.storage.util.UtilityType;
@@ -35,6 +37,8 @@ public class AzureStorageService {
     private final RestTemplateBuilder restTemplateBuilder;
     private final UtilityFactory utilityFactory;
 
+    private static  final String CanonicalResource_GET_BLOB_API = "/darwinmdmnonprod/mdmproducts-container\ncomp:list\nrestype:container";
+
     public AzureStorageService(AzureStorageConfiguration storageConfiguration, RestTemplateBuilder restTemplateBuilder,
                                UtilityFactory utilityFactory) {
         this.storageConfiguration = storageConfiguration;
@@ -58,7 +62,7 @@ public class AzureStorageService {
      *
      * @return
      */
-    private HttpHeaders getHeaders() {
+    private HttpHeaders addHeaders(String blobAuthheaderSignedAuth, String requestTime) {
         // Prepare header
         HttpHeaders headers = new HttpHeaders();
         //headers.setContentType(MediaType.APPLICATION_JSON);
@@ -70,7 +74,7 @@ public class AzureStorageService {
     }
 
     private String getURIParameters() {
-        String RESOURCE_URL = "https://" + storageConfiguration.getStorageAccountName() + ".blob.core.windows.net/test-container";
+        String RESOURCE_URL = "https://" + storageConfiguration.getStorageAccountName() + ".blob.core.windows.net/mdmproducts-container";
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(RESOURCE_URL)
                 .queryParam("restype", "container")
@@ -154,9 +158,15 @@ public class AzureStorageService {
      */
     public String listAllFilesInStorageContainer() {
         RestTemplate restTemplate = restTemplateBuilder.build();
-        HttpEntity requestEntity = new HttpEntity(null, getHeaders());
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
-        log.info("Azure BLOB endpoint ::" + getURIParameters());
+        BlobAuthHeader blobAuthHeader = BlobAuthheaderBuilder.getBuilder().setRequestTime().setCanonicalizedHeader(storageConfiguration.getApiVersion()).setCanonicalizedResource(CanonicalResource_GET_BLOB_API).setAuthorizationHeader("").build();
+        SecurityUtil securityUtil = (SecurityUtil) utilityFactory.getUtility(UtilityType.SECURITY_UTILITY.getType());
+        String blobAuthHeaderSignedAuthKey= securityUtil.createSignature(blobAuthHeader.getAuthorizationHeader());
+
+        HttpEntity requestEntity = new HttpEntity(null, addHeaders(blobAuthHeaderSignedAuthKey,blobAuthHeader.getRequestTime()));
+
+
+        log.info("blobAuthHeader To String ::" + blobAuthHeader.toString());
         ResponseEntity<String> response = restTemplate.exchange(getURIParameters(), HttpMethod.GET, requestEntity, String.class);
         log.info("response {}", response);
         return response.getBody();
